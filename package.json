@@ -1,0 +1,29 @@
+{
+  "name": "frontend-service-for-labor-market-analysis",
+  "version": "0.0.0",
+  "description": "",
+  "homepage": "https://github.com/B2ng4/frontend-service-for-labor-market-analysis#readme",
+  "bugs": {
+    "url": "https://github.com/B2ng4/frontend-service-for-labor-market-analysis/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/B2ng4/frontend-service-for-labor-market-analysis.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@vitejs/plugin-vue": "^6.0.4",
+    "@vueuse/core": "^14.2.0",
+    "element-plus": "^2.13.2",
+    "vite": "^7.3.1",
+    "vue": "^3.5.27",
+    "vue-router": "^5.0.2"
+  }
+}
