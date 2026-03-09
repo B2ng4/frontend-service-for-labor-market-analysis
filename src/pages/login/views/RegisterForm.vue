@@ -1,0 +1,64 @@
+<template>
+  <div class="container">
+    <el-row justify="center">
+      <el-card style="width: 400px">
+        <el-form :model="form">
+          <el-form-item>
+            <span class="label">Фио</span>
+            <el-input v-model="form.fio"/>
+          </el-form-item>
+          <el-form-item>
+            <span class="label">Ссылка на Вк</span>
+            <el-input v-model="form.vkUrl"/>
+          </el-form-item>
+          <el-form-item>
+            <span class="label">Логин</span>
+            <el-input v-model="form.login"/>
+          </el-form-item>
+          <el-form-item>
+            <span class="label">Пароль</span>
+            <el-input
+                v-model="form.password"
+                type="password"
+                show-password
+            />
+          </el-form-item>
+          <div class="display-flex align-items-center flex-column">
+            <el-button
+                class="width-50 display-block"
+                type="primary"
+                @click="onSubmit"
+            >
+              Регистрация
+            </el-button>
+            <el-text
+                class="cursor-pointer mt-3"
+                @click="$router.push('/login')"
+            >
+              Войти
+            </el-text>
+          </div>
+        </el-form>
+      </el-card>
+    </el-row>
+  </div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+
+const form = ref({});
+
+const onSubmit = () => {
+  console.log('submit!')
+}
+</script>
+
+<style scoped>
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+</style>

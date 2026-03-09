@@ -1,5 +1,9 @@
-import LoginPage from "@pages/login/LoginPage.vue";
+import landingRoutes from "@pages/landing/router";
+import loginRoutes from "@pages/login/router";
+import mainRoutes from "@pages/main/router";
 
 export const routes = [
-    { path: '/login', component: LoginPage },
+    landingRoutes,
+    loginRoutes,
+    mainRoutes,
 ];

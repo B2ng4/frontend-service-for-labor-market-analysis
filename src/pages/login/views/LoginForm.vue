@@ -23,7 +23,12 @@
             >
               Вход
             </el-button>
-            <el-text class="cursor-pointer mt-3">Регистрация</el-text>
+            <el-text
+                class="cursor-pointer mt-3"
+                @click="$router.push('/login/register')"
+            >
+              Регистрация
+            </el-text>
           </div>
         </el-form>
       </el-card>
