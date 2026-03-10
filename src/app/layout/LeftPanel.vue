@@ -23,7 +23,7 @@
 </template>
 
 <script setup>
-import { Menu } from "@element-plus/icons-vue";
+import { Menu, User, Document } from "@element-plus/icons-vue";
 import { useRoute } from "vue-router";
 
 const route = useRoute();
@@ -33,6 +33,16 @@ const routes = [
     url: "/main/dashboard",
     label: "Дашборд",
     icon: Menu,
+  },
+  {
+    url: "/main/profile",
+    label: "Профиль",
+    icon: User,
+  },
+  {
+    url: "/main/resume",
+    label: "Анализ резюме",
+    icon: Document,
   },
 ];
 
