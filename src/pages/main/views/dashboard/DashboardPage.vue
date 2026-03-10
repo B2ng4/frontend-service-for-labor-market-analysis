@@ -92,6 +92,54 @@ const chartsById = reactive({
       color: ["#4F7BF7", "#36CFC9", "#A98BFF", "#FFB347", "#FF6B72"],
     },
   },
+  "top-skills": {
+    id: "top-skills",
+    title: "Топ навыков",
+    option: {
+      tooltip: { trigger: "axis" },
+      xAxis: {
+        type: "category",
+        data: ["SQL", "Python", "Excel", "Power BI", "Tableau", "ETL"],
+      },
+      yAxis: { type: "value", name: "вакансий" },
+      series: [{ type: "bar", data: [890, 720, 650, 480, 420, 380], barWidth: "55%" }],
+      color: ["#4F7BF7"],
+    },
+  },
+  "salary-by-region": {
+    id: "salary-by-region",
+    title: "Средняя зарплата по региону (тыс. ₽)",
+    option: {
+      tooltip: { trigger: "axis" },
+      xAxis: {
+        type: "category",
+        data: ["Москва", "СПб", "Казань", "Екб", "Новосиб"],
+      },
+      yAxis: { type: "value" },
+      series: [{ type: "bar", data: [185, 155, 125, 115, 105], barWidth: "55%" }],
+      color: ["#36CFC9"],
+    },
+  },
+  "community-categories": {
+    id: "community-categories",
+    title: "Популярные категории сообществ ВК",
+    option: {
+      tooltip: { trigger: "item" },
+      legend: { bottom: 0 },
+      series: [{
+        type: "pie",
+        radius: ["42%", "70%"],
+        data: [
+          { value: 420, name: "IT и разработка" },
+          { value: 280, name: "Маркетинг" },
+          { value: 220, name: "Финансы" },
+          { value: 180, name: "Дизайн" },
+          { value: 140, name: "HR" },
+        ],
+      }],
+      color: ["#4F7BF7", "#36CFC9", "#A98BFF", "#FFB347", "#FF6B72"],
+    },
+  },
   "region-comparison": {
     id: "region-comparison",
     title: "Сравнение регионов по откликам",
@@ -311,76 +359,19 @@ const chartsById = reactive({
 });
 
 const layout = ref([
-  {
-    i: "salary-trend",
-    x: 0,
-    y: 0,
-    w: 6,
-    h: 3,
-  },
-  {
-    i: "vacancy-by-sector",
-    x: 6,
-    y: 0,
-    w: 6,
-    h: 3,
-  },
-  {
-    i: "region-comparison",
-    x: 0,
-    y: 3,
-    w: 7,
-    h: 3,
-  },
-  {
-    i: "competition-index",
-    x: 7,
-    y: 3,
-    w: 5,
-    h: 3,
-  },
-  {
-    i: "vacancy-dynamics",
-    x: 0,
-    y: 6,
-    w: 8,
-    h: 3,
-  },
-  {
-    i: "kpi-gauge",
-    x: 8,
-    y: 6,
-    w: 4,
-    h: 3,
-  },
-  {
-    i: "remote-share",
-    x: 0,
-    y: 9,
-    w: 6,
-    h: 3,
-  },
-  {
-    i: "skills-radar",
-    x: 6,
-    y: 9,
-    w: 6,
-    h: 3,
-  },
-  {
-    i: "response-speed",
-    x: 0,
-    y: 12,
-    w: 7,
-    h: 3,
-  },
-  {
-    i: "salary-distribution",
-    x: 7,
-    y: 12,
-    w: 5,
-    h: 3,
-  },
+  { i: "salary-trend", x: 0, y: 0, w: 6, h: 3 },
+  { i: "vacancy-by-sector", x: 6, y: 0, w: 6, h: 3 },
+  { i: "top-skills", x: 0, y: 3, w: 6, h: 3 },
+  { i: "salary-by-region", x: 6, y: 3, w: 6, h: 3 },
+  { i: "community-categories", x: 0, y: 6, w: 6, h: 3 },
+  { i: "region-comparison", x: 6, y: 6, w: 6, h: 3 },
+  { i: "competition-index", x: 0, y: 9, w: 6, h: 3 },
+  { i: "vacancy-dynamics", x: 6, y: 9, w: 6, h: 3 },
+  { i: "kpi-gauge", x: 0, y: 12, w: 4, h: 3 },
+  { i: "remote-share", x: 4, y: 12, w: 4, h: 3 },
+  { i: "skills-radar", x: 8, y: 12, w: 4, h: 3 },
+  { i: "response-speed", x: 0, y: 15, w: 6, h: 3 },
+  { i: "salary-distribution", x: 6, y: 15, w: 6, h: 3 },
 ]);
 
 const onLayoutUpdated = (updatedLayout) => {

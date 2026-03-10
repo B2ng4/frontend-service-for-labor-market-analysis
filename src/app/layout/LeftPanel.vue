@@ -23,30 +23,21 @@
 </template>
 
 <script setup>
-import { Menu, User, Document } from "@element-plus/icons-vue";
+import { Menu, User, Document, Search, Star, Timer } from "@element-plus/icons-vue";
 import { useRoute } from "vue-router";
 
 const route = useRoute();
 
 const routes = [
-  {
-    url: "/main/dashboard",
-    label: "Дашборд",
-    icon: Menu,
-  },
-  {
-    url: "/main/profile",
-    label: "Профиль",
-    icon: User,
-  },
-  {
-    url: "/main/resume",
-    label: "Анализ резюме",
-    icon: Document,
-  },
+  { url: "/main/dashboard", label: "Дашборд", icon: Menu },
+  { url: "/main/profile", label: "Профиль", icon: User },
+  { url: "/main/resume", label: "Анализ резюме", icon: Document },
+  { url: "/main/vacancies", label: "Поиск вакансий", icon: Search },
+  { url: "/main/favorites", label: "Избранное", icon: Star },
+  { url: "/main/history", label: "История", icon: Timer },
 ];
 
-const isActive = (url) => route.path === url;
+const isActive = (url) => route.path === url || route.path.startsWith(url + "/");
 </script>
 
 <style scoped>
