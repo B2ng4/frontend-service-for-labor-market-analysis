@@ -1,7 +1,6 @@
 <template>
   <aside class="layout">
-    <div class="layout__logo">Заголовок</div>
-
+    <div class="layout__logo">Навык</div>
     <div class="layout__nav">
       <div
           v-for="route in routes"

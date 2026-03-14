@@ -10,6 +10,7 @@ import ResumeVsVacancyPage from "@pages/main/views/compare/ResumeVsVacancyPage.v
 export default {
     path: '/main',
     component: MainPage,
+    redirect: '/main/dashboard',
     children: [
         { path: 'dashboard', component: DashboardPage },
         { path: 'profile', component: ProfilePage },
