@@ -6,6 +6,9 @@ import VacanciesSearchPage from "@pages/main/views/vacancies/VacanciesSearchPage
 import FavoritesPage from "@pages/main/views/favorites/FavoritesPage.vue";
 import ViewedHistoryPage from "@pages/main/views/history/ViewedHistoryPage.vue";
 import ResumeVsVacancyPage from "@pages/main/views/compare/ResumeVsVacancyPage.vue";
+import MarketTrackerPage from "@pages/main/views/market/MarketTrackerPage.vue";
+import HiringStrategyPage from "@pages/main/views/strategy/HiringStrategyPage.vue";
+import RiskRadarPage from "@pages/main/views/risks/RiskRadarPage.vue";
 
 export default {
     path: '/main',
@@ -18,5 +21,8 @@ export default {
         { path: 'favorites', component: FavoritesPage },
         { path: 'history', component: ViewedHistoryPage },
         { path: 'compare', component: ResumeVsVacancyPage },
+        { path: 'market-tracker', component: MarketTrackerPage },
+        { path: 'hiring-strategy', component: HiringStrategyPage },
+        { path: 'risk-radar', component: RiskRadarPage },
     ]
 }

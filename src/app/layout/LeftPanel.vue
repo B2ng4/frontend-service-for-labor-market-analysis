@@ -1,6 +1,6 @@
 <template>
   <aside class="layout">
-    <div class="layout__logo">Заголовок</div>
+    <div class="layout__logo">Навык</div>
 
     <div class="layout__nav">
       <div
@@ -23,7 +23,7 @@
 </template>
 
 <script setup>
-import { Menu, User, Document, Search, Star, Timer } from "@element-plus/icons-vue";
+import { Menu, User, Document, Search, Star, Timer, TrendCharts, Grid, Warning } from "@element-plus/icons-vue";
 import { useRoute } from "vue-router";
 
 const route = useRoute();
@@ -35,6 +35,9 @@ const routes = [
   { url: "/main/vacancies", label: "Поиск вакансий", icon: Search },
   { url: "/main/favorites", label: "Избранное", icon: Star },
   { url: "/main/history", label: "История", icon: Timer },
+  { url: "/main/market-tracker", label: "Мониторинг рынка", icon: TrendCharts },
+  { url: "/main/hiring-strategy", label: "Стратегия найма", icon: Grid },
+  { url: "/main/risk-radar", label: "Радар рисков", icon: Warning },
 ];
 
 const isActive = (url) => route.path === url || route.path.startsWith(url + "/");
