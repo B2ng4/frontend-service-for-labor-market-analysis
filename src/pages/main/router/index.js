@@ -13,6 +13,7 @@ import RiskRadarPage from "@pages/main/views/risks/RiskRadarPage.vue";
 export default {
     path: '/main',
     component: MainPage,
+    redirect: '/main/dashboard',
     children: [
         { path: 'dashboard', component: DashboardPage },
         { path: 'profile', component: ProfilePage },

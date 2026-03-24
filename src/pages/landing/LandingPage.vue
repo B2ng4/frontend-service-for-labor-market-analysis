@@ -2,15 +2,11 @@
   <el-container class="landing-page">
     <el-header class="landing-header">
       <div class="logo">
-        <span class="logo-mark">LM</span>
-        <span class="logo-text">Labor Market Insights</span>
+        <span class="logo-text">Навык</span>
       </div>
 
       <div class="nav-actions">
         <el-button text @click="goToLogin">Войти</el-button>
-        <el-button type="primary" @click="goToLogin">
-          Начать подбор
-        </el-button>
       </div>
     </el-header>
 
@@ -30,9 +26,6 @@
           <div class="hero-actions">
             <el-button type="primary" size="large" @click="goToLogin">
               Найти вакансию
-            </el-button>
-            <el-button size="large" @click="goToLogin">
-              Я — работодатель
             </el-button>
           </div>
 
@@ -79,7 +72,7 @@
     </el-main>
 
     <el-footer class="landing-footer">
-      <span>© {{ new Date().getFullYear() }} Labor Market Insights</span>
+      <span>© {{ new Date().getFullYear() }} Навык</span>
       <span class="footer-separator">•</span>
       <span>Аналитика рынка труда и умная подборка вакансий</span>
     </el-footer>
@@ -121,18 +114,6 @@ const goToLogin = () => {
   font-weight: 600;
   font-size: 16px;
   color: #1f2933;
-}
-
-.logo-mark {
-  width: 32px;
-  height: 32px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 14px;
 }
 
 .nav-actions {
