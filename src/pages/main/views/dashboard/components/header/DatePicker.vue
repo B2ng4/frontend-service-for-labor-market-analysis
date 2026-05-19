@@ -7,6 +7,7 @@
         start-placeholder="Дата начала"
         end-placeholder="Дата конца"
         value-format="YYYY-MM-DD"
+        clearable
     />
   </div>
 </template>

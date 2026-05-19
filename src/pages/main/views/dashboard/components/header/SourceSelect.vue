@@ -5,6 +5,7 @@
       multiple
       collapse-tags
       collapse-tags-tooltip
+      clearable
       placeholder="Источники данных"
       style="min-width: 280px"
     >

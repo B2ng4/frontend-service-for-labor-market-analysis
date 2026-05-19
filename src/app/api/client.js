@@ -1,4 +1,16 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
+const resolveApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+
+  if (typeof window !== "undefined" && window.location.hostname.endsWith("cloudpub.ru")) {
+    return "https://appositely-stellar-raptor.cloudpub.ru";
+  }
+
+  return "http://localhost:8000";
+};
+
+const API_BASE_URL = resolveApiBaseUrl().replace(/\/+$/, "");
 
 const buildHeaders = (headers = {}, token) => {
   const merged = { ...headers };

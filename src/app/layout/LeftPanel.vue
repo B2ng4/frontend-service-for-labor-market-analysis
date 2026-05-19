@@ -1,6 +1,11 @@
 <template>
   <aside class="layout">
-    <div class="layout__logo">Навык</div>
+    <div class="layout__logo-wrap">
+      <div class="layout__logo">Навык</div>
+      <el-text v-if="session.state.user?.email" class="layout__user" size="small">
+        {{ session.state.user.email }}
+      </el-text>
+    </div>
 
     <div class="layout__nav">
       <div
@@ -72,6 +77,18 @@ const logout = async () => {
   font-weight: 700;
   letter-spacing: 1px;
   padding: 8px 10px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.layout__logo-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.layout__user {
+  color: rgba(255, 255, 255, 0.85);
+  padding: 0 10px 8px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 

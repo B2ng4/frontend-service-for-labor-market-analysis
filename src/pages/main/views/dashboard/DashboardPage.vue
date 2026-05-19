@@ -1,13 +1,17 @@
 <template>
   <section class="dashboard-page">
     <dashboard-header />
-    <el-alert v-if="dashboardState.error" :title="dashboardState.error" type="error" show-icon class="dashboard-alert" />
+    <el-alert v-if="dashboardState.error" :title="dashboardState.error" type="warning" show-icon class="dashboard-alert" />
     <el-alert
-      v-else-if="dashboardState.loading"
+      v-else-if="dashboardState.loading && !dashboardState.hasLoaded"
       title="Обновляем аналитику по данным бекенда..."
       type="info"
       show-icon
       class="dashboard-alert"
+    />
+    <el-empty
+      v-if="!dashboardState.loading && dashboardState.hasLoaded && isDashboardEmpty"
+      description="Недостаточно данных аналитики для отображения графиков"
     />
 
     <div class="dashboard-panel">
@@ -53,6 +57,10 @@ import { useDashboardStore } from "@app/store/useDashboardStore";
 
 const dashboardStore = useDashboardStore();
 const dashboardState = dashboardStore.state;
+const isDashboardEmpty = computed(() => {
+  const p = dashboardState.payload;
+  return !p.stats && !p.trends.length && !p.byDomain.length && !p.topSkills.length;
+});
 
 const monthLabel = (isoDate) => {
   const d = new Date(isoDate);
@@ -276,6 +284,9 @@ const derived = computed(() => {
     salaryCoverage: p.stats?.total_vacancies
       ? Number(((Number(p.stats.with_salary || 0) / Number(p.stats.total_vacancies || 1)) * 100).toFixed(1))
       : 0,
+    totalVacancies: Number(p.stats?.total_vacancies || 0),
+    withSalary: Number(p.stats?.with_salary || 0),
+    employers: Number(p.stats?.unique_employers || 0),
   };
 });
 
@@ -311,6 +322,7 @@ const applyCharts = () => {
   chartsById["skills-radar"].option.series[0].data = [{ value: d.topSkillsCounts.slice(0, 6), name: "Спрос" }];
 
   chartsById["kpi-gauge"].option.series[0].data = [{ value: d.salaryCoverage, name: "С указанием" }];
+  chartsById["kpi-gauge"].title = `Покрытие зарплат (${d.withSalary}/${d.totalVacancies})`;
 
   chartsById["response-speed"].option.xAxis.data = d.matrixDomains;
   chartsById["response-speed"].option.yAxis.data = d.matrixGrades;
@@ -319,6 +331,7 @@ const applyCharts = () => {
 
   chartsById["salary-distribution"].option.xAxis.data = d.salaryNames;
   chartsById["salary-distribution"].option.series[0].data = d.salaryMedian;
+  chartsById["vacancy-by-sector"].title = `Вакансии по направлениям (работодателей: ${d.employers})`;
 };
 
 const layout = ref([

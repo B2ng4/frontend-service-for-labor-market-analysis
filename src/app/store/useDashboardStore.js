@@ -18,6 +18,8 @@ const state = reactive({
   },
   loading: false,
   error: "",
+  hasLoaded: false,
+  lastUpdatedAt: null,
   payload: {
     stats: null,
     trends: [],
@@ -47,22 +49,18 @@ const filterBySources = (rows) => {
   return (rows || []).filter((row) => selected.has(String(row.source || "").toLowerCase()));
 };
 
+const asArray = (value) => (Array.isArray(value) ? value : []);
+const asObject = (value) => (value && typeof value === "object" ? value : null);
+
+let requestSeq = 0;
+
 const fetchDashboardData = async () => {
+  const currentSeq = ++requestSeq;
   state.loading = true;
   state.error = "";
   try {
     const params = getFilterParams();
-    const [
-      stats,
-      trends,
-      topSkills,
-      byDomain,
-      byRegion,
-      bySource,
-      byGrade,
-      salaryByDomain,
-      domainGradeMatrix,
-    ] = await Promise.all([
+    const results = await Promise.allSettled([
       getStats(params),
       getTrends({ ...params, days: 180 }),
       getTopSkills({ ...params, limit: 12 }),
@@ -73,6 +71,23 @@ const fetchDashboardData = async () => {
       getSalaryStats({ ...params, group_by: "domain", limit: 10 }),
       getDomainGradeMatrix(params),
     ]);
+
+    if (currentSeq !== requestSeq) return;
+
+    const [statsRes, trendsRes, topSkillsRes, byDomainRes, byRegionRes, bySourceRes, byGradeRes, salaryRes, matrixRes] = results;
+    const errors = results
+      .filter((item) => item.status === "rejected")
+      .map((item) => item.reason?.message || "неизвестная ошибка");
+
+    const stats = statsRes.status === "fulfilled" ? asObject(statsRes.value) : null;
+    const trends = trendsRes.status === "fulfilled" ? asArray(trendsRes.value) : [];
+    const topSkills = topSkillsRes.status === "fulfilled" ? asArray(topSkillsRes.value) : [];
+    const byDomain = byDomainRes.status === "fulfilled" ? asArray(byDomainRes.value) : [];
+    const byRegion = byRegionRes.status === "fulfilled" ? asArray(byRegionRes.value) : [];
+    const bySource = bySourceRes.status === "fulfilled" ? asArray(bySourceRes.value) : [];
+    const byGrade = byGradeRes.status === "fulfilled" ? asArray(byGradeRes.value) : [];
+    const salaryByDomain = salaryRes.status === "fulfilled" ? asArray(salaryRes.value) : [];
+    const domainGradeMatrix = matrixRes.status === "fulfilled" ? asArray(matrixRes.value) : [];
 
     state.payload = {
       stats,
@@ -85,10 +100,18 @@ const fetchDashboardData = async () => {
       salaryByDomain,
       domainGradeMatrix,
     };
+    state.hasLoaded = true;
+    state.lastUpdatedAt = new Date().toISOString();
+    if (errors.length) {
+      state.error = `Часть аналитики недоступна: ${errors[0]}`;
+    }
   } catch (error) {
+    if (currentSeq !== requestSeq) return;
     state.error = error.message || "Ошибка загрузки аналитики";
   } finally {
-    state.loading = false;
+    if (currentSeq === requestSeq) {
+      state.loading = false;
+    }
   }
 };
 
