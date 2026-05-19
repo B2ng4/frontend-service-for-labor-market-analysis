@@ -19,16 +19,19 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
-import { DataLine } from "@element-plus/icons-vue";
+import { computed } from "vue";
+import { useDashboardStore } from "@app/store/useDashboardStore";
 
-const selectedSources = ref(["hh", "superjob"]);
+const dashboardStore = useDashboardStore();
+const selectedSources = computed({
+  get: () => dashboardStore.state.filters.sources,
+  set: (value) => dashboardStore.setSources(value),
+});
 
 const sourceOptions = [
   { label: "HeadHunter", value: "hh" },
   { label: "SuperJob", value: "superjob" },
   { label: "Avito Работа", value: "avito" },
-  { label: "Rabota.ru", value: "rabota" },
 ];
 </script>
 

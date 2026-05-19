@@ -19,6 +19,7 @@
             <el-button
                 class="width-50 display-block"
                 type="primary"
+                :loading="loading"
                 @click="onSubmit"
             >
               Вход
@@ -38,12 +39,44 @@
 
 <script setup>
 import { ref } from 'vue';
+import { useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
+import { loginUser, getCurrentUser } from "@app/api/auth";
+import { useSessionStore } from "@app/store/useSessionStore";
 
-const form = ref({});
+const router = useRouter();
+const session = useSessionStore();
+const loading = ref(false);
+const form = ref({
+  login: "",
+  password: "",
+});
 
-const onSubmit = () => {
-  console.log('submit!')
-}
+const onSubmit = async () => {
+  if (!form.value.login || !form.value.password) {
+    ElMessage.warning("Введите email и пароль");
+    return;
+  }
+
+  loading.value = true;
+  try {
+    const tokenData = await loginUser({
+      email: form.value.login,
+      password: form.value.password,
+    });
+    session.setToken(tokenData.access_token);
+
+    const me = await getCurrentUser(tokenData.access_token);
+    session.setUser(me);
+
+    ElMessage.success("Вход выполнен");
+    await router.push("/main/dashboard");
+  } catch (error) {
+    ElMessage.error(error.message || "Не удалось выполнить вход");
+  } finally {
+    loading.value = false;
+  }
+};
 </script>
 
 <style scoped>

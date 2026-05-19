@@ -27,6 +27,7 @@
             <el-button
                 class="width-50 display-block"
                 type="primary"
+                :loading="loading"
                 @click="onSubmit"
             >
               Регистрация
@@ -46,12 +47,57 @@
 
 <script setup>
 import { ref } from 'vue';
+import { useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
+import { registerUser } from "@app/api/auth";
 
-const form = ref({});
+const router = useRouter();
+const loading = ref(false);
+const form = ref({
+  fio: "",
+  vkUrl: "",
+  login: "",
+  password: "",
+});
 
-const onSubmit = () => {
-  console.log('submit!')
-}
+const parseVkId = (value) => {
+  if (!value) return null;
+  const normalized = String(value).trim();
+  if (!normalized) return null;
+  if (/^\d+$/.test(normalized)) return Number(normalized);
+  const match = normalized.match(/(?:vk\.com\/id|id)(\d+)/i);
+  if (match) return Number(match[1]);
+  return null;
+};
+
+const onSubmit = async () => {
+  if (!form.value.login || !form.value.password) {
+    ElMessage.warning("Заполните email и пароль");
+    return;
+  }
+
+  const vkId = parseVkId(form.value.vkUrl);
+  if (form.value.vkUrl && !vkId) {
+    ElMessage.warning("VK должен быть в формате id123456 или ссылкой vk.com/id123456");
+    return;
+  }
+
+  loading.value = true;
+  try {
+    await registerUser({
+      email: form.value.login,
+      password: form.value.password,
+      full_name: form.value.fio || null,
+      vk_id: vkId,
+    });
+    ElMessage.success("Регистрация успешна, войдите в систему");
+    await router.push("/login");
+  } catch (error) {
+    ElMessage.error(error.message || "Не удалось зарегистрироваться");
+  } finally {
+    loading.value = false;
+  }
+};
 </script>
 
 <style scoped>

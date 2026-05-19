@@ -104,12 +104,15 @@ import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { Upload, Loading } from "@element-plus/icons-vue";
-import { SOURCE_LABELS, SOURCE_TYPES } from "@app/utils/vacancy";
+import { SOURCE_LABELS, SOURCE_TYPES, mapRecommendationVacancy } from "@app/utils/vacancy";
 import { useAppStore } from "@app/store/useAppStore";
+import { useSessionStore } from "@app/store/useSessionStore";
+import { uploadResume, getRecommendations, getCandidateProfile } from "@app/api/analytics";
 import VacancyModal from "@app/components/VacancyModal.vue";
 
 const router = useRouter();
 const store = useAppStore();
+const session = useSessionStore();
 
 const uploadRef = ref(null);
 const file = ref(null);
@@ -126,12 +129,6 @@ const matchedSkills = computed(() => (selectedVacancy.value ? store.getMatchedSk
 const sourceLabels = SOURCE_LABELS;
 const sourceTypes = SOURCE_TYPES;
 
-const mockVacanciesWithSource = [
-  { id: "1", title: "Data Analyst", company: "FinTech Corp", salary: "от 180 000 ₽", match: 95, tags: ["SQL", "Python", "Tableau"], source: "hh", url: "https://hh.ru/vacancy/123456" },
-  { id: "2", title: "Бизнес-аналитик", company: "Retail Group", salary: "150 000 – 200 000 ₽", match: 88, tags: ["Excel", "BI", "Power BI"], source: "hh", url: "https://hh.ru/vacancy/123457" },
-  { id: "3", title: "Аналитик данных", company: "HRTech", salary: "от 170 000 ₽", match: 82, tags: ["SQL", "Python", "ETL"], source: "superjob", url: "https://hh.ru/vacancy/123458" },
-];
-
 const onFileChange = (uploadFile) => {
   if (uploadFile.raw?.type === "application/pdf") {
     file.value = uploadFile.raw;
@@ -142,22 +139,37 @@ const onFileChange = (uploadFile) => {
   }
 };
 
-const mockReport = () => ({
-  score: 78,
-  summary: "Резюме соответствует уровню Middle Data Analyst. Выделяются сильные навыки в SQL и Python.",
-  skills: ["SQL", "Python", "Tableau", "Excel", "Power BI", "ETL"],
-  experience: "Около 3 лет в аналитике. Опыт дашбордов, отчётов, работы с данными.",
-  recommendations: ["Добавьте количественные метрики к проектам", "Укажите конкретные инструменты визуализации", "Расширьте раздел технических навыков"],
-  vacancies: mockVacanciesWithSource,
-});
-
 const analyzeResume = async () => {
-  if (!file.value) return;
+  if (!file.value || !session.state.token) return;
   loading.value = true;
   store.setResumeStatus("loading");
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-  store.setResumeReport(mockReport());
-  loading.value = false;
+  try {
+    const uploadResponse = await uploadResume(session.state.token, file.value);
+    const profile = await getCandidateProfile(session.state.token);
+    const recs = await getRecommendations(session.state.token, { source: "resume", limit: 20 });
+
+    const mappedVacancies = (recs.vacancies || []).map((item, index) => mapRecommendationVacancy(item, index));
+    store.vacancies.value = mappedVacancies;
+
+    const skills = uploadResponse.profile_json?.skills || profile.profile_json?.skills || [];
+    store.setResumeReport({
+      score: mappedVacancies[0]?.match ?? 0,
+      summary: "Профиль успешно извлечен из резюме и сохранен на сервере.",
+      skills,
+      experience: "Опыт и структура профиля получены из загруженного PDF.",
+      recommendations: [
+        "Проверьте недостающие навыки в карточках вакансий.",
+        "Используйте страницу сравнения для приоритизации обучения.",
+      ],
+      vacancies: mappedVacancies,
+    });
+    ElMessage.success(uploadResponse.message || "Резюме обработано");
+  } catch (error) {
+    store.setResumeStatus("idle");
+    ElMessage.error(error.message || "Не удалось проанализировать резюме");
+  } finally {
+    loading.value = false;
+  }
 };
 
 const reset = () => {

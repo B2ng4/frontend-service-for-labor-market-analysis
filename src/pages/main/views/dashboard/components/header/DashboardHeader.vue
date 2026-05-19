@@ -6,14 +6,30 @@
     <div class="layout__controls">
       <source-select />
       <date-picker />
+      <el-button type="primary" @click="refresh">Обновить</el-button>
     </div>
   </div>
 </template>
 
 <script setup>
+import { watch } from "vue";
 import SourceSelect from "@pages/main/views/dashboard/components/header/SourceSelect.vue";
 import DatePicker from "@pages/main/views/dashboard/components/header/DatePicker.vue";
+import { useDashboardStore } from "@app/store/useDashboardStore";
 
+const dashboardStore = useDashboardStore();
+
+const refresh = async () => {
+  await dashboardStore.fetchDashboardData();
+};
+
+watch(
+  () => [dashboardStore.state.filters.sources, dashboardStore.state.filters.dateRange],
+  () => {
+    refresh();
+  },
+  { deep: true },
+);
 </script>
 
 <style scoped>
