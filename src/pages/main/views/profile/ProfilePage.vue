@@ -18,8 +18,8 @@
             <el-descriptions-item label="ФИО">{{ profile.fio || '—' }}</el-descriptions-item>
             <el-descriptions-item label="Логин">{{ profile.login || '—' }}</el-descriptions-item>
             <el-descriptions-item label="ВКонтакте">
-              <el-link v-if="profile.vkUrl" :href="profile.vkUrl" target="_blank" type="primary">
-                {{ profile.vkUrl }}
+              <el-link v-if="profile.vkId" :href="`https://vk.com/id${profile.vkId}`" target="_blank" type="primary">
+                {{ `https://vk.com/id${profile.vkId}` }}
               </el-link>
               <span v-else>—</span>
             </el-descriptions-item>
@@ -35,6 +35,7 @@
           <el-button v-if="vacanciesList.length" size="small" @click="exportRecs">Скачать</el-button>
         </div>
       </template>
+      <div v-if="loading" class="loading-block">Загрузка рекомендаций...</div>
       <el-table :data="vacanciesList" @row-click="openVacancy">
         <el-table-column label="Должность" min-width="160">
           <template #default="{ row }">
@@ -73,20 +74,28 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
 import { User, Star, StarFilled } from "@element-plus/icons-vue";
-import { SOURCE_LABELS, SOURCE_TYPES } from "@app/utils/vacancy";
+import { SOURCE_LABELS, SOURCE_TYPES, mapRecommendationVacancy } from "@app/utils/vacancy";
 import { useAppStore } from "@app/store/useAppStore";
+import { useSessionStore } from "@app/store/useSessionStore";
+import { getRecommendations } from "@app/api/analytics";
 import VacancyModal from "@app/components/VacancyModal.vue";
 
 const router = useRouter();
 const store = useAppStore();
+const session = useSessionStore();
+const loading = ref(false);
 
-const profile = ref({
-  fio: "Иванов Иван Иванович",
-  login: "ivanov",
-  vkUrl: "https://vk.com/example",
+const profile = computed(() => {
+  const user = session.state.user || {};
+  return {
+    fio: user.full_name || "—",
+    login: user.email || "—",
+    vkId: user.vk_id || null,
+  };
 });
 
 const modalVisible = ref(false);
@@ -96,8 +105,8 @@ const sourceLabels = SOURCE_LABELS;
 const sourceTypes = SOURCE_TYPES;
 
 const vacanciesList = computed(() => {
-  const v = store.vacancies;
-  return Array.isArray(v) ? v : (v?.value ?? []);
+  const v = store.vacancies?.value ?? store.vacancies ?? [];
+  return Array.isArray(v) ? v : [];
 });
 
 const missingSkills = computed(() => (selectedVacancy.value ? store.getMissingSkills(selectedVacancy.value.tags) : []));
@@ -123,6 +132,23 @@ const exportRecs = () => {
   a.click();
   URL.revokeObjectURL(url);
 };
+
+onMounted(async () => {
+  if (!session.state.token) return;
+  loading.value = true;
+  try {
+    const data = await getRecommendations(session.state.token, { source: "resume", limit: 20 });
+    store.vacancies.value = (data.vacancies || []).map((item, index) => mapRecommendationVacancy(item, index));
+  } catch (error) {
+    ElMessage.warning(error.message || "Не удалось получить рекомендации по резюме");
+    try {
+      const fallback = await getRecommendations(session.state.token, { source: "vk", limit: 20 });
+      store.vacancies.value = (fallback.vacancies || []).map((item, index) => mapRecommendationVacancy(item, index));
+    } catch (_err) {}
+  } finally {
+    loading.value = false;
+  }
+});
 </script>
 
 <style scoped>
@@ -143,6 +169,11 @@ const exportRecs = () => {
 
 .vacancies-card {
   margin-top: 24px;
+}
+
+.loading-block {
+  margin-bottom: 12px;
+  color: var(--el-text-color-secondary);
 }
 
 .vacancies-header {

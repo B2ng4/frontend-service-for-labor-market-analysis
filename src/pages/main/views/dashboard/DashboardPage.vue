@@ -1,6 +1,18 @@
 <template>
   <section class="dashboard-page">
     <dashboard-header />
+    <el-alert v-if="dashboardState.error" :title="dashboardState.error" type="warning" show-icon class="dashboard-alert" />
+    <el-alert
+      v-else-if="dashboardState.loading && !dashboardState.hasLoaded"
+      title="Обновляем аналитику по данным бекенда..."
+      type="info"
+      show-icon
+      class="dashboard-alert"
+    />
+    <el-empty
+      v-if="!dashboardState.loading && dashboardState.hasLoaded && isDashboardEmpty"
+      description="Недостаточно данных аналитики для отображения графиков"
+    />
 
     <div class="dashboard-panel">
       <GridLayout
@@ -37,30 +49,39 @@
 </template>
 
 <script setup>
-import { reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import { GridLayout, GridItem } from "vue-grid-layout-v3";
 import DashboardHeader from "@pages/main/views/dashboard/components/header/DashboardHeader.vue";
 import EChartCard from "@pages/main/views/dashboard/components/charts/EChartCard.vue";
+import { useDashboardStore } from "@app/store/useDashboardStore";
+
+const dashboardStore = useDashboardStore();
+const dashboardState = dashboardStore.state;
+const isDashboardEmpty = computed(() => {
+  const p = dashboardState.payload;
+  return !p.stats && !p.trends.length && !p.byDomain.length && !p.topSkills.length;
+});
+
+const monthLabel = (isoDate) => {
+  const d = new Date(isoDate);
+  return Number.isNaN(d.getTime()) ? String(isoDate) : d.toLocaleDateString("ru-RU", { day: "2-digit", month: "short" });
+};
+
+const toCountMap = (rows, keyField) =>
+  (rows || []).reduce((acc, row) => {
+    acc[String(row[keyField] || "Не указано")] = Number(row.count || 0);
+    return acc;
+  }, {});
 
 const chartsById = reactive({
   "salary-trend": {
     id: "salary-trend",
-    title: "Динамика средней зарплаты",
+    title: "Динамика публикации вакансий",
     option: {
       tooltip: { trigger: "axis" },
-      xAxis: {
-        type: "category",
-        data: ["Янв", "Фев", "Мар", "Апр", "Май", "Июн"],
-      },
-      yAxis: { type: "value", name: "тыс. руб." },
-      series: [
-        {
-          data: [92, 95, 97, 102, 107, 110],
-          type: "line",
-          smooth: true,
-          areaStyle: { opacity: 0.12 },
-        },
-      ],
+      xAxis: { type: "category", data: [] },
+      yAxis: { type: "value", name: "вакансий" },
+      series: [{ data: [], type: "line", smooth: true, areaStyle: { opacity: 0.12 } }],
       color: ["#4F7BF7"],
     },
   },
@@ -70,25 +91,7 @@ const chartsById = reactive({
     option: {
       tooltip: { trigger: "item" },
       legend: { bottom: 0 },
-      series: [
-        {
-          type: "pie",
-          radius: ["42%", "70%"],
-          avoidLabelOverlap: false,
-          itemStyle: {
-            borderRadius: 6,
-            borderColor: "#fff",
-            borderWidth: 2,
-          },
-          data: [
-            { value: 335, name: "IT" },
-            { value: 240, name: "Финансы" },
-            { value: 188, name: "Медицина" },
-            { value: 124, name: "Маркетинг" },
-            { value: 98, name: "Производство" },
-          ],
-        },
-      ],
+      series: [{ type: "pie", radius: ["42%", "70%"], data: [] }],
       color: ["#4F7BF7", "#36CFC9", "#A98BFF", "#FFB347", "#FF6B72"],
     },
   },
@@ -97,149 +100,79 @@ const chartsById = reactive({
     title: "Топ навыков",
     option: {
       tooltip: { trigger: "axis" },
-      xAxis: {
-        type: "category",
-        data: ["SQL", "Python", "Excel", "Power BI", "Tableau", "ETL"],
-      },
+      xAxis: { type: "category", data: [] },
       yAxis: { type: "value", name: "вакансий" },
-      series: [{ type: "bar", data: [890, 720, 650, 480, 420, 380], barWidth: "55%" }],
+      series: [{ type: "bar", data: [], barWidth: "55%" }],
       color: ["#4F7BF7"],
     },
   },
   "salary-by-region": {
     id: "salary-by-region",
-    title: "Средняя зарплата по региону (тыс. ₽)",
+    title: "Вакансии по регионам",
     option: {
       tooltip: { trigger: "axis" },
-      xAxis: {
-        type: "category",
-        data: ["Москва", "СПб", "Казань", "Екб", "Новосиб"],
-      },
+      xAxis: { type: "category", data: [] },
       yAxis: { type: "value" },
-      series: [{ type: "bar", data: [185, 155, 125, 115, 105], barWidth: "55%" }],
+      series: [{ type: "bar", data: [], barWidth: "55%" }],
       color: ["#36CFC9"],
     },
   },
   "community-categories": {
     id: "community-categories",
-    title: "Популярные категории сообществ ВК",
+    title: "Источники вакансий",
     option: {
       tooltip: { trigger: "item" },
       legend: { bottom: 0 },
-      series: [{
-        type: "pie",
-        radius: ["42%", "70%"],
-        data: [
-          { value: 420, name: "IT и разработка" },
-          { value: 280, name: "Маркетинг" },
-          { value: 220, name: "Финансы" },
-          { value: 180, name: "Дизайн" },
-          { value: 140, name: "HR" },
-        ],
-      }],
+      series: [{ type: "pie", radius: ["42%", "70%"], data: [] }],
       color: ["#4F7BF7", "#36CFC9", "#A98BFF", "#FFB347", "#FF6B72"],
     },
   },
   "region-comparison": {
     id: "region-comparison",
-    title: "Сравнение регионов по откликам",
+    title: "Сравнение грейдов",
     option: {
       tooltip: { trigger: "axis" },
-      xAxis: {
-        type: "category",
-        data: ["Москва", "СПб", "Казань", "Екб", "Новосиб"],
-      },
+      xAxis: { type: "category", data: [] },
       yAxis: { type: "value" },
-      series: [
-        {
-          type: "bar",
-          data: [920, 680, 510, 460, 380],
-          barWidth: "45%",
-        },
-      ],
+      series: [{ type: "bar", data: [], barWidth: "45%" }],
       color: ["#6E9BFF"],
     },
   },
   "competition-index": {
     id: "competition-index",
-    title: "Индекс конкуренции по месяцам",
+    title: "Индекс конкуренции",
     option: {
       tooltip: { trigger: "axis" },
-      xAxis: {
-        type: "category",
-        data: ["Янв", "Фев", "Мар", "Апр", "Май", "Июн"],
-      },
+      xAxis: { type: "category", data: [] },
       yAxis: { type: "value", min: 0, max: 10 },
-      series: [
-        {
-          type: "line",
-          smooth: true,
-          symbolSize: 8,
-          data: [4.2, 4.5, 5.1, 5.8, 5.6, 5.9],
-        },
-      ],
+      series: [{ type: "line", smooth: true, symbolSize: 8, data: [] }],
       color: ["#9C6DFF"],
     },
   },
   "vacancy-dynamics": {
     id: "vacancy-dynamics",
-    title: "Динамика вакансий и откликов",
+    title: "Динамика вакансий и зарплат",
     option: {
       tooltip: { trigger: "axis" },
       legend: { top: 0 },
-      xAxis: {
-        type: "category",
-        data: ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл"],
-      },
+      xAxis: { type: "category", data: [] },
       yAxis: { type: "value" },
       series: [
-        {
-          name: "Вакансии",
-          type: "line",
-          smooth: true,
-          data: [1200, 1280, 1350, 1440, 1510, 1580, 1630],
-        },
-        {
-          name: "Отклики",
-          type: "line",
-          smooth: true,
-          data: [9100, 9800, 10300, 11100, 11800, 12200, 12900],
-        },
+        { name: "Вакансии", type: "line", smooth: true, data: [] },
+        { name: "Средняя зарплата", type: "line", smooth: true, data: [] },
       ],
       color: ["#4F7BF7", "#36CFC9"],
     },
   },
   "remote-share": {
     id: "remote-share",
-    title: "Формат занятости",
+    title: "Матрица домен / грейд",
     option: {
       tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
       legend: { bottom: 0 },
-      xAxis: {
-        type: "category",
-        data: ["IT", "Маркетинг", "Финансы", "Продажи", "Поддержка"],
-      },
+      xAxis: { type: "category", data: [] },
       yAxis: { type: "value" },
-      series: [
-        {
-          name: "Офис",
-          type: "bar",
-          stack: "format",
-          data: [420, 360, 290, 510, 340],
-        },
-        {
-          name: "Гибрид",
-          type: "bar",
-          stack: "format",
-          data: [300, 240, 210, 260, 190],
-        },
-        {
-          name: "Удаленно",
-          type: "bar",
-          stack: "format",
-          data: [580, 330, 260, 200, 280],
-        },
-      ],
+      series: [],
       color: ["#6E9BFF", "#A98BFF", "#36CFC9"],
     },
   },
@@ -248,115 +181,158 @@ const chartsById = reactive({
     title: "Востребованные навыки",
     option: {
       tooltip: {},
-      legend: { top: 0 },
-      radar: {
-        radius: "60%",
-        indicator: [
-          { name: "SQL", max: 100 },
-          { name: "Python", max: 100 },
-          { name: "Excel", max: 100 },
-          { name: "BI", max: 100 },
-          { name: "ETL", max: 100 },
-          { name: "ML", max: 100 },
-        ],
-      },
-      series: [
-        {
-          name: "Уровень спроса",
-          type: "radar",
-          data: [
-            {
-              value: [84, 79, 92, 73, 66, 58],
-              name: "2026",
-            },
-          ],
-          areaStyle: { opacity: 0.2 },
-        },
-      ],
+      radar: { radius: "60%", indicator: [] },
+      series: [{ type: "radar", data: [] }],
       color: ["#4F7BF7"],
     },
   },
   "kpi-gauge": {
     id: "kpi-gauge",
-    title: "Индекс закрытия вакансий",
+    title: "Покрытие зарплат",
     option: {
       tooltip: { formatter: "{a}<br/>{b}: {c}%" },
-      series: [
-        {
-          name: "Закрытие",
-          type: "gauge",
-          progress: { show: true, width: 14 },
-          axisLine: { lineStyle: { width: 14 } },
-          detail: { valueAnimation: true, formatter: "{value}%" },
-          data: [{ value: 73, name: "Успешно" }],
-        },
-      ],
+      series: [{ name: "Зарплаты", type: "gauge", progress: { show: true, width: 14 }, axisLine: { lineStyle: { width: 14 } }, detail: { valueAnimation: true, formatter: "{value}%" }, data: [{ value: 0, name: "С указанием" }] }],
       color: ["#5ECF8E"],
     },
   },
   "response-speed": {
     id: "response-speed",
-    title: "Скорость отклика (дни/недели)",
+    title: "Тепловая карта доменов и грейдов",
     option: {
       tooltip: { position: "top" },
       grid: { height: "68%", top: "12%" },
-      xAxis: {
-        type: "category",
-        data: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
-      },
-      yAxis: {
-        type: "category",
-        data: ["Нед1", "Нед2", "Нед3", "Нед4"],
-      },
-      visualMap: {
-        min: 1,
-        max: 9,
-        calculable: true,
-        orient: "horizontal",
-        left: "center",
-        bottom: 0,
-      },
-      series: [
-        {
-          type: "heatmap",
-          data: [
-            [0, 0, 3], [1, 0, 4], [2, 0, 6], [3, 0, 5], [4, 0, 4], [5, 0, 2], [6, 0, 1],
-            [0, 1, 5], [1, 1, 7], [2, 1, 8], [3, 1, 7], [4, 1, 6], [5, 1, 3], [6, 1, 2],
-            [0, 2, 4], [1, 2, 6], [2, 2, 7], [3, 2, 6], [4, 2, 5], [5, 2, 4], [6, 2, 3],
-            [0, 3, 2], [1, 3, 4], [2, 3, 5], [3, 3, 4], [4, 3, 3], [5, 3, 2], [6, 3, 1],
-          ],
-          label: { show: false },
-          emphasis: {
-            itemStyle: {
-              shadowBlur: 10,
-              shadowColor: "rgba(0, 0, 0, 0.25)",
-            },
-          },
-        },
-      ],
+      xAxis: { type: "category", data: [] },
+      yAxis: { type: "category", data: [] },
+      visualMap: { min: 0, max: 1, calculable: true, orient: "horizontal", left: "center", bottom: 0 },
+      series: [{ type: "heatmap", data: [] }],
     },
   },
   "salary-distribution": {
     id: "salary-distribution",
-    title: "Распределение зарплат",
+    title: "Распределение зарплат по доменам",
     option: {
       tooltip: { trigger: "axis" },
-      xAxis: {
-        type: "category",
-        data: ["50-80", "80-110", "110-140", "140-170", "170-200", "200+"],
-      },
-      yAxis: { type: "value", name: "кандидатов" },
-      series: [
-        {
-          type: "bar",
-          data: [180, 320, 410, 280, 160, 90],
-          barWidth: "55%",
-        },
-      ],
+      xAxis: { type: "category", data: [] },
+      yAxis: { type: "value", name: "медиана, ₽" },
+      series: [{ type: "bar", data: [], barWidth: "55%" }],
       color: ["#FFB347"],
     },
   },
 });
+
+const derived = computed(() => {
+  const p = dashboardState.payload;
+  const trends = p.trends || [];
+  const byDomain = p.byDomain || [];
+  const topSkills = p.topSkills || [];
+  const byRegion = p.byRegion || [];
+  const bySource = p.bySource || [];
+  const byGrade = p.byGrade || [];
+  const salary = p.salaryByDomain || [];
+  const matrix = p.domainGradeMatrix || [];
+
+  const trendLabels = trends.map((r) => monthLabel(r.date));
+  const trendCounts = trends.map((r) => Number(r.count || 0));
+  const avgTrend = trendCounts.length ? trendCounts.reduce((a, b) => a + b, 0) / trendCounts.length : 0;
+  const competition = trendCounts.map((v) => Number(((v / (avgTrend || 1)) * 5).toFixed(2)));
+
+  const matrixDomains = [...new Set(matrix.map((m) => m.domain || "Не указано"))];
+  const matrixGrades = [...new Set(matrix.map((m) => m.grade || "Не указано"))];
+  const matrixGrid = matrix.map((m) => [
+    matrixDomains.indexOf(m.domain || "Не указано"),
+    matrixGrades.indexOf(m.grade || "Не указано"),
+    Number(m.count || 0),
+  ]);
+  const matrixMax = matrixGrid.length ? Math.max(...matrixGrid.map((x) => x[2])) : 1;
+
+  const domainMap = toCountMap(byDomain, "domain");
+  const gradeMap = toCountMap(byGrade, "grade");
+  const domainsForStack = [...new Set(matrixDomains.concat(Object.keys(domainMap)))];
+  const gradesForStack = [...new Set(matrixGrades.concat(Object.keys(gradeMap)))];
+
+  const stackSeries = gradesForStack.map((grade) => ({
+    name: grade,
+    type: "bar",
+    stack: "matrix",
+    data: domainsForStack.map((domain) => {
+      const hit = matrix.find((m) => (m.domain || "Не указано") === domain && (m.grade || "Не указано") === grade);
+      return Number(hit?.count || 0);
+    }),
+  }));
+
+  return {
+    trendLabels,
+    trendCounts,
+    competition,
+    byDomainPie: byDomain.map((r) => ({ name: r.domain || "Не указано", value: Number(r.count || 0) })),
+    topSkillsNames: topSkills.map((r) => r.skill),
+    topSkillsCounts: topSkills.map((r) => Number(r.count || 0)),
+    regionNames: byRegion.map((r) => r.region || "Не указано"),
+    regionCounts: byRegion.map((r) => Number(r.count || 0)),
+    sourcesPie: bySource.map((r) => ({ name: r.source || "unknown", value: Number(r.count || 0) })),
+    gradesNames: byGrade.map((r) => r.grade || "Не указано"),
+    gradesCounts: byGrade.map((r) => Number(r.count || 0)),
+    salaryNames: salary.map((r) => r.domain || "Не указано"),
+    salaryMedian: salary.map((r) => Number(r.median_salary || 0)),
+    salaryAvg: salary.map((r) => Number((r.avg_salary || 0).toFixed(0))),
+    stackDomains: domainsForStack,
+    stackSeries,
+    matrixDomains,
+    matrixGrades,
+    matrixGrid,
+    matrixMax,
+    salaryCoverage: p.stats?.total_vacancies
+      ? Number(((Number(p.stats.with_salary || 0) / Number(p.stats.total_vacancies || 1)) * 100).toFixed(1))
+      : 0,
+    totalVacancies: Number(p.stats?.total_vacancies || 0),
+    withSalary: Number(p.stats?.with_salary || 0),
+    employers: Number(p.stats?.unique_employers || 0),
+  };
+});
+
+const applyCharts = () => {
+  const d = derived.value;
+  chartsById["salary-trend"].option.xAxis.data = d.trendLabels;
+  chartsById["salary-trend"].option.series[0].data = d.trendCounts;
+
+  chartsById["vacancy-by-sector"].option.series[0].data = d.byDomainPie;
+
+  chartsById["top-skills"].option.xAxis.data = d.topSkillsNames;
+  chartsById["top-skills"].option.series[0].data = d.topSkillsCounts;
+
+  chartsById["salary-by-region"].option.xAxis.data = d.regionNames;
+  chartsById["salary-by-region"].option.series[0].data = d.regionCounts;
+
+  chartsById["community-categories"].option.series[0].data = d.sourcesPie;
+
+  chartsById["region-comparison"].option.xAxis.data = d.gradesNames;
+  chartsById["region-comparison"].option.series[0].data = d.gradesCounts;
+
+  chartsById["competition-index"].option.xAxis.data = d.trendLabels;
+  chartsById["competition-index"].option.series[0].data = d.competition;
+
+  chartsById["vacancy-dynamics"].option.xAxis.data = d.trendLabels;
+  chartsById["vacancy-dynamics"].option.series[0].data = d.trendCounts;
+  chartsById["vacancy-dynamics"].option.series[1].data = d.salaryAvg;
+
+  chartsById["remote-share"].option.xAxis.data = d.stackDomains;
+  chartsById["remote-share"].option.series = d.stackSeries;
+
+  chartsById["skills-radar"].option.radar.indicator = d.topSkillsNames.slice(0, 6).map((s) => ({ name: s, max: Math.max(...d.topSkillsCounts, 1) }));
+  chartsById["skills-radar"].option.series[0].data = [{ value: d.topSkillsCounts.slice(0, 6), name: "Спрос" }];
+
+  chartsById["kpi-gauge"].option.series[0].data = [{ value: d.salaryCoverage, name: "С указанием" }];
+  chartsById["kpi-gauge"].title = `Покрытие зарплат (${d.withSalary}/${d.totalVacancies})`;
+
+  chartsById["response-speed"].option.xAxis.data = d.matrixDomains;
+  chartsById["response-speed"].option.yAxis.data = d.matrixGrades;
+  chartsById["response-speed"].option.visualMap.max = d.matrixMax;
+  chartsById["response-speed"].option.series[0].data = d.matrixGrid;
+
+  chartsById["salary-distribution"].option.xAxis.data = d.salaryNames;
+  chartsById["salary-distribution"].option.series[0].data = d.salaryMedian;
+  chartsById["vacancy-by-sector"].title = `Вакансии по направлениям (работодателей: ${d.employers})`;
+};
 
 const layout = ref([
   { i: "salary-trend", x: 0, y: 0, w: 6, h: 3 },
@@ -377,6 +353,35 @@ const layout = ref([
 const onLayoutUpdated = (updatedLayout) => {
   layout.value = updatedLayout;
 };
+
+onMounted(async () => {
+  await dashboardStore.fetchDashboardData();
+  applyCharts();
+});
+
+watch(
+  () => dashboardState.payload,
+  () => {
+    applyCharts();
+  },
+  { deep: true },
+);
+
+watch(
+  () => dashboardState.filters.sources,
+  () => {
+    applyCharts();
+  },
+  { deep: true },
+);
+
+watch(
+  () => dashboardState.filters.dateRange,
+  () => {
+    applyCharts();
+  },
+  { deep: true },
+);
 </script>
 
 <style scoped>
@@ -394,6 +399,10 @@ const onLayoutUpdated = (updatedLayout) => {
   background: linear-gradient(180deg, #f9fbff 0%, #f4f8ff 60%, #f6f9ff 100%);
   border-radius: 16px;
   box-shadow: 0 10px 24px rgba(64, 87, 130, 0.08);
+}
+
+.dashboard-alert {
+  margin-top: 12px;
 }
 
 .drag-panel__label {

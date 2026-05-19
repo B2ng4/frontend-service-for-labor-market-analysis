@@ -1,6 +1,11 @@
 <template>
   <aside class="layout">
-    <div class="layout__logo">Навык</div>
+    <div class="layout__logo-wrap">
+      <div class="layout__logo">Навык</div>
+      <el-text v-if="session.state.user?.email" class="layout__user" size="small">
+        {{ session.state.user.email }}
+      </el-text>
+    </div>
 
     <div class="layout__nav">
       <div
@@ -19,14 +24,19 @@
         <span class="navigation__label">{{ route.label }}</span>
       </div>
     </div>
+    <el-button text class="layout__logout" @click="logout">Выйти</el-button>
   </aside>
 </template>
 
 <script setup>
 import { Menu, User, Document, Search, Star, Timer, TrendCharts, Grid, Warning } from "@element-plus/icons-vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
+import { useSessionStore } from "@app/store/useSessionStore";
 
 const route = useRoute();
+const router = useRouter();
+const session = useSessionStore();
 
 const routes = [
   { url: "/main/dashboard", label: "Дашборд", icon: Menu },
@@ -41,6 +51,12 @@ const routes = [
 ];
 
 const isActive = (url) => route.path === url || route.path.startsWith(url + "/");
+
+const logout = async () => {
+  session.clearSession();
+  ElMessage.success("Вы вышли из аккаунта");
+  await router.push("/login");
+};
 </script>
 
 <style scoped>
@@ -64,11 +80,30 @@ const isActive = (url) => route.path === url || route.path.startsWith(url + "/")
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+.layout__logo-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.layout__user {
+  color: rgba(255, 255, 255, 0.85);
+  padding: 0 10px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
 .layout__nav {
   display: flex;
   flex-direction: column;
   gap: 8px;
   margin-top: 16px;
+}
+
+.layout__logout {
+  margin-top: auto;
+  color: #ffffff;
+  justify-content: flex-start;
+  width: 100%;
 }
 
 .navigation {

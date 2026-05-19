@@ -12,6 +12,7 @@
           clearable
           size="large"
           class="search-input"
+          @change="loadVacancies"
         >
           <template #prefix>
             <el-icon><Search /></el-icon>
@@ -29,7 +30,7 @@
               type="button"
               class="filter-chip"
               :class="{ 'filter-chip--active': filters.source === opt.value }"
-              @click="filters.source = filters.source === opt.value ? '' : opt.value"
+              @click="filters.source = filters.source === opt.value ? '' : opt.value; loadVacancies()"
             >
               {{ opt.label }}
             </button>
@@ -37,7 +38,7 @@
         </div>
         <div class="filter-group">
           <span class="filter-label">Регион</span>
-          <el-select v-model="filters.region" placeholder="Любой" clearable size="default" class="filter-select">
+          <el-select v-model="filters.region" placeholder="Любой" clearable size="default" class="filter-select" @change="loadVacancies">
             <el-option label="Москва" value="Москва" />
             <el-option label="Санкт-Петербург" value="Санкт-Петербург" />
           </el-select>
@@ -51,6 +52,7 @@
             :controls="false"
             placeholder="0"
             class="filter-salary"
+            @change="loadVacancies"
           />
         </div>
         <div class="filter-group filter-group--skills">
@@ -82,6 +84,7 @@
           <el-button v-if="filteredVacancies.length" size="small" @click="exportRecommendations">Скачать (PDF)</el-button>
         </div>
       </template>
+      <div v-if="loading" class="loading-block">Загрузка вакансий...</div>
       <el-table :data="filteredVacancies" @row-click="openVacancy">
         <el-table-column label="Должность" min-width="160">
           <template #default="{ row }">
@@ -123,11 +126,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from "vue";
+import { ref, reactive, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
 import { Star, StarFilled, Search } from "@element-plus/icons-vue";
-import { SOURCE_LABELS, SOURCE_TYPES } from "@app/utils/vacancy";
+import { SOURCE_LABELS, SOURCE_TYPES, mapSearchVacancy } from "@app/utils/vacancy";
 import { useAppStore } from "@app/store/useAppStore";
+import { searchVacancies } from "@app/api/analytics";
 import VacancyModal from "@app/components/VacancyModal.vue";
 
 const router = useRouter();
@@ -153,9 +158,11 @@ const sourceOptions = [
   { label: "SuperJob", value: "superjob" },
 ];
 
+const loading = ref(false);
+const apiVacancies = ref([]);
+
 const filteredVacancies = computed(() => {
-  const arr = store.vacancies?.value ?? store.vacancies ?? [];
-  let list = Array.isArray(arr) ? [...arr] : [];
+  let list = [...apiVacancies.value];
   if (filters.query) {
     const q = filters.query.toLowerCase();
     list = list.filter((v) => v.title?.toLowerCase().includes(q) || v.company?.toLowerCase().includes(q));
@@ -179,6 +186,7 @@ const resetFilters = () => {
   filters.region = "";
   filters.salaryMin = null;
   filters.skills = [];
+  loadVacancies();
 };
 
 const openVacancy = (row) => {
@@ -201,6 +209,27 @@ const exportRecommendations = () => {
   a.click();
   URL.revokeObjectURL(url);
 };
+
+const loadVacancies = async () => {
+  loading.value = true;
+  try {
+    const response = await searchVacancies({
+      q: filters.query || undefined,
+      source: filters.source || undefined,
+      city: filters.region || undefined,
+      salary_from_min: filters.salaryMin || undefined,
+      limit: 100,
+      offset: 0,
+    });
+    apiVacancies.value = (response.items || []).map((item, index) => mapSearchVacancy(item, index));
+  } catch (error) {
+    ElMessage.error(error.message || "Не удалось загрузить вакансии");
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(loadVacancies);
 </script>
 
 <style scoped>
@@ -302,6 +331,11 @@ const exportRecommendations = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.loading-block {
+  margin-bottom: 12px;
+  color: var(--el-text-color-secondary);
 }
 
 .cell-title {

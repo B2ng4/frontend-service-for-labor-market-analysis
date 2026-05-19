@@ -4,6 +4,11 @@ import path from 'path';
 
 export default defineConfig({
     plugins: [vue()],
+    server: {
+        allowedHosts: [
+            "righteously-ladylike-nightjar.cloudpub.ru",
+        ],
+    },
     define: {
         __BASE__URL__: JSON.stringify('null'),
     },

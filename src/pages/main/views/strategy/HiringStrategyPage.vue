@@ -3,6 +3,7 @@
     <div class="page-header">
       <el-text size="large" tag="b">Стратегия найма</el-text>
     </div>
+    <el-alert v-if="error" type="warning" :title="error" show-icon class="module-alert" />
 
     <el-card shadow="never" class="strategy-card">
       <template #header>
@@ -39,17 +40,63 @@
 </template>
 
 <script setup>
-const priorities = [
-  { team: "Платформа данных", budget: "2.4 млн ₽", priority: 88, note: "Ускорение закрытия backend-ролей" },
-  { team: "Продуктовая аналитика", budget: "1.6 млн ₽", priority: 76, note: "Рост спроса на A/B экспертизу" },
-  { team: "BI-направление", budget: "1.1 млн ₽", priority: 69, note: "Поддержка региональной экспансии" },
-];
+import { computed, onMounted, ref } from "vue";
+import { getByDomain, getByGrade, getSalaryStats, getTopSkills } from "@app/api/analytics";
 
-const timeline = [
-  { period: "Апрель", target: "Набор 4 middle-аналитиков", owner: "HR-партнер", status: "В фокусе" },
-  { period: "Май", target: "Открытие 2 senior-позиций", owner: "Руководитель Data", status: "Запланировано" },
-  { period: "Июнь", target: "Усиление BI-команды (3 роли)", owner: "Лид рекрутинга", status: "Запланировано" },
-];
+const loading = ref(false);
+const error = ref("");
+const data = ref({
+  domains: [],
+  grades: [],
+  salary: [],
+  skills: [],
+});
+
+const priorities = computed(() => {
+  const salaryMap = Object.fromEntries((data.value.salary || []).map((s) => [s.domain || "Не указано", Number(s.avg_salary || 0)]));
+  return (data.value.domains || []).slice(0, 4).map((domain) => {
+    const count = Number(domain.count || 0);
+    const priority = Math.min(100, Math.round((count / 1500) * 100));
+    const budget = Math.max(600000, Math.round((salaryMap[domain.domain] || 120000) * 8));
+    return {
+      team: domain.domain || "Не указано",
+      budget: `${budget.toLocaleString("ru-RU")} ₽`,
+      priority,
+      note: `Сегмент содержит ${count.toLocaleString("ru-RU")} вакансий`,
+    };
+  });
+});
+
+const timeline = computed(() => {
+  const grades = (data.value.grades || []).slice(0, 3);
+  const months = ["Текущий месяц", "Следующий", "Через 2 месяца"];
+  return grades.map((grade, index) => ({
+    period: months[index] || `Окно ${index + 1}`,
+    target: `Фокус на найме уровня ${grade.grade || "не указан"} (${grade.count} вакансий в рынке)`,
+    owner: index === 0 ? "HR-партнер" : index === 1 ? "Руководитель Data" : "Лид рекрутинга",
+    status: index === 0 ? "В фокусе" : "Запланировано",
+  }));
+});
+
+const loadData = async () => {
+  loading.value = true;
+  error.value = "";
+  try {
+    const [domains, grades, salary, skills] = await Promise.all([
+      getByDomain({ limit: 10 }),
+      getByGrade({ limit: 10 }),
+      getSalaryStats({ group_by: "domain", limit: 10 }),
+      getTopSkills({ limit: 15 }),
+    ]);
+    data.value = { domains, grades, salary, skills };
+  } catch (err) {
+    error.value = err.message || "Не удалось сформировать стратегию найма";
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(loadData);
 </script>
 
 <style scoped>
@@ -68,6 +115,10 @@ const timeline = [
 .strategy-card {
   margin-bottom: 18px;
   border-radius: 12px;
+}
+
+.module-alert {
+  margin-bottom: 12px;
 }
 
 .card-header {

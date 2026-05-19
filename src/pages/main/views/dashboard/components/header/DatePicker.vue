@@ -7,14 +7,20 @@
         start-placeholder="Дата начала"
         end-placeholder="Дата конца"
         value-format="YYYY-MM-DD"
+        clearable
     />
   </div>
 </template>
 
 <script setup>
-import {ref} from "vue";
+import { computed } from "vue";
+import { useDashboardStore } from "@app/store/useDashboardStore";
 
-const val = ref(["2026-01-01", "2026-03-01"]);
+const dashboardStore = useDashboardStore();
+const val = computed({
+  get: () => dashboardStore.state.filters.dateRange,
+  set: (value) => dashboardStore.setDateRange(value),
+});
 </script>
 
 <style scoped>
