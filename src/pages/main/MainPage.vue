@@ -15,12 +15,15 @@ import LeftPanel from "@app/layout/LeftPanel.vue";
 <style scoped>
 .main-layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
   align-items: stretch;
+  overflow: hidden;
 }
 
 .main-layout__content {
   flex: 1;
+  min-width: 0;
+  overflow: auto;
   padding: 16px;
   background: #fafafa;
 }

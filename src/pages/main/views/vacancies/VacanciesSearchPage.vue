@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <section class="vacancies-page">
     <div class="page-header">
       <el-text size="large" tag="b">Поиск вакансий</el-text>
@@ -81,11 +81,16 @@
       <template #header>
         <div class="results-header">
           <span>Найдено: {{ filteredVacancies.length }}</span>
-          <el-button v-if="filteredVacancies.length" size="small" @click="exportRecommendations">Скачать (PDF)</el-button>
+          <el-button v-if="filteredVacancies.length" size="small" @click="exportRecommendations">Скачать</el-button>
         </div>
       </template>
-      <div v-if="loading" class="loading-block">Загрузка вакансий...</div>
-      <el-table :data="filteredVacancies" @row-click="openVacancy">
+      <el-skeleton v-if="loading && !apiVacancies.length" class="table-skeleton" :rows="6" animated />
+      <el-table
+        v-else
+        v-loading="loading"
+        :data="filteredVacancies"
+        @row-click="openVacancy"
+      >
         <el-table-column label="Должность" min-width="160">
           <template #default="{ row }">
             <div class="cell-title">
@@ -108,7 +113,7 @@
               :icon="store.isFavorite(row.id) ? StarFilled : Star"
               link
               :type="store.isFavorite(row.id) ? 'warning' : undefined"
-              @click.stop="store.toggleFavorite(row.id)"
+              @click.stop="toggleFavorite(row.id)"
             />
           </template>
         </el-table-column>
@@ -197,6 +202,11 @@ const openVacancy = (row) => {
 
 const openCompare = (v) => {
   router.push({ path: "/main/compare", query: { id: v.id } });
+};
+
+const toggleFavorite = (id) => {
+  const added = store.toggleFavorite(id);
+  ElMessage.success(added ? "Вакансия добавлена в избранное" : "Вакансия удалена из избранного");
 };
 
 const exportRecommendations = () => {
@@ -333,9 +343,8 @@ onMounted(loadVacancies);
   align-items: center;
 }
 
-.loading-block {
-  margin-bottom: 12px;
-  color: var(--el-text-color-secondary);
+.table-skeleton {
+  padding: 8px 0;
 }
 
 .cell-title {
@@ -356,3 +365,4 @@ onMounted(loadVacancies);
   background-color: var(--el-fill-color-light);
 }
 </style>
+

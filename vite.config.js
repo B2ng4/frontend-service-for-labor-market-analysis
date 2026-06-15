@@ -6,7 +6,7 @@ export default defineConfig({
     plugins: [vue()],
     server: {
         allowedHosts: [
-            "righteously-ladylike-nightjar.cloudpub.ru",
+            "inanely-fascinated-sparrow.cloudpub.ru",
         ],
     },
     define: {
@@ -18,5 +18,5 @@ export default defineConfig({
             '@pages': path.join(__dirname, './src/pages'),
             '@app': path.join(__dirname, './src/app'),
         }
-    }
+    },
 });

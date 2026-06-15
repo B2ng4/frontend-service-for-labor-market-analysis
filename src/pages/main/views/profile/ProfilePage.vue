@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <section class="profile-page">
     <div class="page-header">
       <el-text size="large" tag="b">Профиль</el-text>
@@ -35,8 +35,13 @@
           <el-button v-if="vacanciesList.length" size="small" @click="exportRecs">Скачать</el-button>
         </div>
       </template>
-      <div v-if="loading" class="loading-block">Загрузка рекомендаций...</div>
-      <el-table :data="vacanciesList" @row-click="openVacancy">
+      <el-skeleton v-if="loading && !vacanciesList.length" class="table-skeleton" :rows="5" animated />
+      <el-table
+        v-else
+        v-loading="loading"
+        :data="vacanciesList"
+        @row-click="openVacancy"
+      >
         <el-table-column label="Должность" min-width="160">
           <template #default="{ row }">
             <div class="cell-title">
@@ -57,7 +62,7 @@
         <el-table-column prop="salary" label="Зарплата" width="180" align="right" />
         <el-table-column label="" width="60" align="center">
           <template #default="{ row }">
-            <el-button :icon="store.isFavorite(row.id) ? StarFilled : Star" link :type="store.isFavorite(row.id) ? 'warning' : undefined" @click.stop="store.toggleFavorite(row.id)" />
+            <el-button :icon="store.isFavorite(row.id) ? StarFilled : Star" link :type="store.isFavorite(row.id) ? 'warning' : undefined" @click.stop="toggleFavorite(row.id)" />
           </template>
         </el-table-column>
       </el-table>
@@ -122,6 +127,11 @@ const openCompare = (v) => {
   router.push({ path: "/main/compare", query: { id: v.id } });
 };
 
+const toggleFavorite = (id) => {
+  const added = store.toggleFavorite(id);
+  ElMessage.success(added ? "Вакансия добавлена в избранное" : "Вакансия удалена из избранного");
+};
+
 const exportRecs = () => {
   const text = vacanciesList.value.map((v) => `${v.title} | ${v.company} | ${v.salary}`).join("\n");
   const blob = new Blob([text], { type: "text/plain" });
@@ -171,9 +181,8 @@ onMounted(async () => {
   margin-top: 24px;
 }
 
-.loading-block {
-  margin-bottom: 12px;
-  color: var(--el-text-color-secondary);
+.table-skeleton {
+  padding: 8px 0;
 }
 
 .vacancies-header {
@@ -200,3 +209,4 @@ onMounted(async () => {
   background-color: var(--el-fill-color-light);
 }
 </style>
+

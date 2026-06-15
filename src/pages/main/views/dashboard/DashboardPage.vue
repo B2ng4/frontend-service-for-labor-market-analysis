@@ -41,7 +41,11 @@
           :i="item.i"
           class="grid-item"
         >
-          <e-chart-card :chart="chartsById[item.i]" :show-drag-handle="true" />
+          <e-chart-card
+            :chart="chartsById[item.i]"
+            :show-drag-handle="true"
+            :loading="dashboardState.loading && !dashboardState.hasLoaded"
+          />
         </GridItem>
       </GridLayout>
     </div>

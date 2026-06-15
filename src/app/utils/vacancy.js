@@ -1,4 +1,4 @@
-export const SOURCE_LABELS = {
+﻿export const SOURCE_LABELS = {
   hh: "HH.ru",
   avito: "Авито",
   superjob: "SuperJob",

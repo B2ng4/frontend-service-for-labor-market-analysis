@@ -38,10 +38,12 @@ const resumeStatus = ref(loadJson("lm_resumeStatus", "idle"));
 
 function toggleFavorite(id) {
     const s = new Set(favorites.value);
-    if (s.has(id)) s.delete(id);
-    else s.add(id);
+    const added = !s.has(id);
+    if (added) s.add(id);
+    else s.delete(id);
   favorites.value = s;
   saveJson(FAVORITES_KEY, [...s]);
+  return added;
 }
 
 function isFavorite(id) {

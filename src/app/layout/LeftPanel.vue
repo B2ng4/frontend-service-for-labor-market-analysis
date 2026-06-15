@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <aside class="layout">
     <div class="layout__logo-wrap">
       <div class="layout__logo">Навык</div>
@@ -24,12 +24,14 @@
         <span class="navigation__label">{{ route.label }}</span>
       </div>
     </div>
-    <el-button text class="layout__logout" @click="logout">Выйти</el-button>
+    <el-button class="layout__logout" :icon="SwitchButton" @click="logout">
+      Выйти
+    </el-button>
   </aside>
 </template>
 
 <script setup>
-import { Menu, User, Document, Search, Star, Timer, TrendCharts, Grid, Warning } from "@element-plus/icons-vue";
+import { Menu, User, Document, Search, Star, Timer, SwitchButton } from "@element-plus/icons-vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useSessionStore } from "@app/store/useSessionStore";
@@ -45,9 +47,6 @@ const routes = [
   { url: "/main/vacancies", label: "Поиск вакансий", icon: Search },
   { url: "/main/favorites", label: "Избранное", icon: Star },
   { url: "/main/history", label: "История", icon: Timer },
-  { url: "/main/market-tracker", label: "Мониторинг рынка", icon: TrendCharts },
-  { url: "/main/hiring-strategy", label: "Стратегия найма", icon: Grid },
-  { url: "/main/risk-radar", label: "Радар рисков", icon: Warning },
 ];
 
 const isActive = (url) => route.path === url || route.path.startsWith(url + "/");
@@ -61,14 +60,19 @@ const logout = async () => {
 
 <style scoped>
 .layout {
-  min-height: 100vh;
+  position: sticky;
+  top: 0;
+  height: 100vh;
   width: 220px;
+  display: flex;
+  flex-direction: column;
   flex-shrink: 0;
   align-self: stretch;
   box-sizing: border-box;
   padding: 14px 12px;
   background: linear-gradient(180deg, #4e6fa4 0%, #3f5f93 55%, #344d78 100%);
   border-right: 1px solid rgba(255, 255, 255, 0.16);
+  overflow: hidden;
 }
 
 .layout__logo {
@@ -95,15 +99,48 @@ const logout = async () => {
 .layout__nav {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
   gap: 8px;
   margin-top: 16px;
+  padding-bottom: 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+
+.layout__nav::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 .layout__logout {
   margin-top: auto;
-  color: #ffffff;
-  justify-content: flex-start;
+  flex-shrink: 0;
   width: 100%;
+  height: 40px;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 10px;
+}
+
+.layout__logout:hover,
+.layout__logout:focus {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.36);
+}
+
+.layout__logout:active {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.layout__logout :deep(.el-icon),
+.layout__logout :deep(span) {
+  color: #ffffff;
 }
 
 .navigation {
@@ -129,3 +166,4 @@ const logout = async () => {
   font-weight: 600;
 }
 </style>
+

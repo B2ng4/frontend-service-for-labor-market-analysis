@@ -8,7 +8,28 @@
         </div>
       </div>
     </div>
-    <div ref="chartRef" class="chart-card__content"></div>
+    <div class="chart-card__body">
+      <div v-if="loading" class="chart-skeleton">
+        <el-skeleton animated>
+          <template #template>
+            <div class="chart-skeleton__plot">
+              <el-skeleton-item class="chart-skeleton__line chart-skeleton__line--wide" variant="text" />
+              <el-skeleton-item class="chart-skeleton__line" variant="text" />
+              <div class="chart-skeleton__bars">
+                <el-skeleton-item
+                  v-for="height in skeletonBars"
+                  :key="height"
+                  class="chart-skeleton__bar"
+                  :style="{ height }"
+                  variant="rect"
+                />
+              </div>
+            </div>
+          </template>
+        </el-skeleton>
+      </div>
+      <div v-show="!loading" ref="chartRef" class="chart-card__content"></div>
+    </div>
   </article>
 </template>
 
@@ -26,9 +47,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const chartRef = ref(null);
+const skeletonBars = ["42%", "68%", "54%", "82%", "63%", "76%", "48%"];
 let chartInstance = null;
 let resizeObserver = null;
 
@@ -64,6 +90,16 @@ watch(
     renderChart();
   },
   { deep: true },
+);
+
+watch(
+  () => props.loading,
+  async (loading) => {
+    if (loading) return;
+    await nextTick();
+    handleResize();
+    renderChart();
+  },
 );
 
 onBeforeUnmount(() => {
@@ -125,8 +161,54 @@ onBeforeUnmount(() => {
   cursor: grab;
 }
 
+.chart-card__body,
 .chart-card__content {
   width: 100%;
   height: calc(100% - 36px);
+}
+
+.chart-card__body {
+  position: relative;
+}
+
+.chart-skeleton {
+  height: 100%;
+  min-height: 170px;
+}
+
+.chart-skeleton :deep(.el-skeleton) {
+  height: 100%;
+}
+
+.chart-skeleton__plot {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 170px;
+  padding: 10px 4px 4px;
+}
+
+.chart-skeleton__line {
+  width: 62%;
+  height: 12px;
+  margin-bottom: 10px;
+}
+
+.chart-skeleton__line--wide {
+  width: 84%;
+}
+
+.chart-skeleton__bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex: 1;
+  padding-top: 14px;
+}
+
+.chart-skeleton__bar {
+  flex: 1;
+  min-width: 12px;
+  border-radius: 6px 6px 2px 2px;
 }
 </style>

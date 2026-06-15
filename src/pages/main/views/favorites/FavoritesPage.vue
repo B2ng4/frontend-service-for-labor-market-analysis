@@ -26,7 +26,7 @@
         <el-table-column prop="salary" label="Зарплата" width="160" align="right" />
         <el-table-column label="" width="80" align="center">
           <template #default="{ row }">
-            <el-button :icon="StarFilled" link type="warning" @click.stop="store.toggleFavorite(row.id)" />
+            <el-button :icon="StarFilled" link type="warning" @click.stop="removeFavorite(row.id)" />
           </template>
         </el-table-column>
       </el-table>
@@ -45,6 +45,7 @@
 <script setup>
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
 import { StarFilled } from "@element-plus/icons-vue";
 import { SOURCE_LABELS, SOURCE_TYPES } from "@app/utils/vacancy";
 import { useAppStore } from "@app/store/useAppStore";
@@ -72,6 +73,11 @@ const openVacancy = (row) => {
 
 const openCompare = (v) => {
   router.push({ path: "/main/compare", query: { id: v.id } });
+};
+
+const removeFavorite = (id) => {
+  store.toggleFavorite(id);
+  ElMessage.success("Вакансия удалена из избранного");
 };
 
 const exportFavorites = () => {

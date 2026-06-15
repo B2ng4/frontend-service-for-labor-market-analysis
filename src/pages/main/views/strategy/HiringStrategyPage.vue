@@ -1,15 +1,16 @@
-<template>
+﻿<template>
   <section class="module-page">
     <div class="page-header">
-      <el-text size="large" tag="b">Стратегия найма</el-text>
+      <el-text size="large" tag="b">РЎС‚СЂР°С‚РµРіРёСЏ РЅР°Р№РјР°</el-text>
     </div>
     <el-alert v-if="error" type="warning" :title="error" show-icon class="module-alert" />
 
     <el-card shadow="never" class="strategy-card">
       <template #header>
-        <div class="card-header">Приоритеты найма по направлениям</div>
+        <div class="card-header">РџСЂРёРѕСЂРёС‚РµС‚С‹ РЅР°Р№РјР° РїРѕ РЅР°РїСЂР°РІР»РµРЅРёСЏРј</div>
       </template>
-      <div class="strategy-grid">
+      <el-skeleton v-if="loading && !priorities.length" class="module-skeleton" :rows="5" animated />
+      <div v-else v-loading="loading" class="strategy-grid">
         <div v-for="item in priorities" :key="item.team" class="strategy-item">
           <div class="strategy-item__head">
             <span class="team">{{ item.team }}</span>
@@ -23,15 +24,16 @@
 
     <el-card shadow="never" class="strategy-card">
       <template #header>
-        <div class="card-header">Плановые окна найма</div>
+        <div class="card-header">РџР»Р°РЅРѕРІС‹Рµ РѕРєРЅР° РЅР°Р№РјР°</div>
       </template>
-      <el-table :data="timeline">
-        <el-table-column prop="period" label="Период" width="140" />
-        <el-table-column prop="target" label="Цель" min-width="220" />
-        <el-table-column prop="owner" label="Ответственный" width="180" />
-        <el-table-column label="Статус" width="140" align="center">
+      <el-skeleton v-if="loading && !timeline.length" class="module-skeleton" :rows="4" animated />
+      <el-table v-else v-loading="loading" :data="timeline">
+        <el-table-column prop="period" label="РџРµСЂРёРѕРґ" width="140" />
+        <el-table-column prop="target" label="Р¦РµР»СЊ" min-width="220" />
+        <el-table-column prop="owner" label="РћС‚РІРµС‚СЃС‚РІРµРЅРЅС‹Р№" width="180" />
+        <el-table-column label="РЎС‚Р°С‚СѓСЃ" width="140" align="center">
           <template #default="{ row }">
-            <el-tag :type="row.status === 'В фокусе' ? 'primary' : 'info'">{{ row.status }}</el-tag>
+            <el-tag :type="row.status === 'Р’ С„РѕРєСѓСЃРµ' ? 'primary' : 'info'">{{ row.status }}</el-tag>
           </template>
         </el-table-column>
       </el-table>
@@ -53,28 +55,28 @@ const data = ref({
 });
 
 const priorities = computed(() => {
-  const salaryMap = Object.fromEntries((data.value.salary || []).map((s) => [s.domain || "Не указано", Number(s.avg_salary || 0)]));
+  const salaryMap = Object.fromEntries((data.value.salary || []).map((s) => [s.domain || "РќРµ СѓРєР°Р·Р°РЅРѕ", Number(s.avg_salary || 0)]));
   return (data.value.domains || []).slice(0, 4).map((domain) => {
     const count = Number(domain.count || 0);
     const priority = Math.min(100, Math.round((count / 1500) * 100));
     const budget = Math.max(600000, Math.round((salaryMap[domain.domain] || 120000) * 8));
     return {
-      team: domain.domain || "Не указано",
-      budget: `${budget.toLocaleString("ru-RU")} ₽`,
+      team: domain.domain || "РќРµ СѓРєР°Р·Р°РЅРѕ",
+      budget: `${budget.toLocaleString("ru-RU")} в‚Ѕ`,
       priority,
-      note: `Сегмент содержит ${count.toLocaleString("ru-RU")} вакансий`,
+      note: `РЎРµРіРјРµРЅС‚ СЃРѕРґРµСЂР¶РёС‚ ${count.toLocaleString("ru-RU")} РІР°РєР°РЅСЃРёР№`,
     };
   });
 });
 
 const timeline = computed(() => {
   const grades = (data.value.grades || []).slice(0, 3);
-  const months = ["Текущий месяц", "Следующий", "Через 2 месяца"];
+  const months = ["РўРµРєСѓС‰РёР№ РјРµСЃСЏС†", "РЎР»РµРґСѓСЋС‰РёР№", "Р§РµСЂРµР· 2 РјРµСЃСЏС†Р°"];
   return grades.map((grade, index) => ({
-    period: months[index] || `Окно ${index + 1}`,
-    target: `Фокус на найме уровня ${grade.grade || "не указан"} (${grade.count} вакансий в рынке)`,
-    owner: index === 0 ? "HR-партнер" : index === 1 ? "Руководитель Data" : "Лид рекрутинга",
-    status: index === 0 ? "В фокусе" : "Запланировано",
+    period: months[index] || `РћРєРЅРѕ ${index + 1}`,
+    target: `Р¤РѕРєСѓСЃ РЅР° РЅР°Р№РјРµ СѓСЂРѕРІРЅСЏ ${grade.grade || "РЅРµ СѓРєР°Р·Р°РЅ"} (${grade.count} РІР°РєР°РЅСЃРёР№ РІ СЂС‹РЅРєРµ)`,
+    owner: index === 0 ? "HR-РїР°СЂС‚РЅРµСЂ" : index === 1 ? "Р СѓРєРѕРІРѕРґРёС‚РµР»СЊ Data" : "Р›РёРґ СЂРµРєСЂСѓС‚РёРЅРіР°",
+    status: index === 0 ? "Р’ С„РѕРєСѓСЃРµ" : "Р—Р°РїР»Р°РЅРёСЂРѕРІР°РЅРѕ",
   }));
 });
 
@@ -90,7 +92,7 @@ const loadData = async () => {
     ]);
     data.value = { domains, grades, salary, skills };
   } catch (err) {
-    error.value = err.message || "Не удалось сформировать стратегию найма";
+    error.value = err.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СЃС„РѕСЂРјРёСЂРѕРІР°С‚СЊ СЃС‚СЂР°С‚РµРіРёСЋ РЅР°Р№РјР°";
   } finally {
     loading.value = false;
   }
@@ -119,6 +121,10 @@ onMounted(loadData);
 
 .module-alert {
   margin-bottom: 12px;
+}
+
+.module-skeleton {
+  padding: 8px 0;
 }
 
 .card-header {
@@ -160,3 +166,4 @@ onMounted(loadData);
   font-size: 13px;
 }
 </style>
+
